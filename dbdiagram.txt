@@ -1,0 +1,96 @@
+Table empresa {
+  empresa_id int [pk, increment]
+  aseguradora_id int [ref: > aseguradora.aseguradora_id]
+  nombre varchar(100) [unique, not null]
+  ruc varchar(50)
+}
+
+Table aseguradora {
+  aseguradora_id int [pk, increment]
+  nombre varchar(100) [not null]
+  correo_contacto varchar(100)
+  telefono varchar(20)
+}
+
+Table vehiculo {
+  vehiculo_id int [pk, increment]
+  empresa_id int [ref: > empresa.empresa_id]
+  placa varchar(10) [unique, not null]
+  marca varchar(50)
+  modelo varchar(50)
+  anio int
+  tipo varchar(20) // 'privado' o 'publico'
+  estado varchar(20) [default: 'activo']
+}
+
+Table usuario {
+  usuario_id int [pk, increment]
+  nombre varchar(100) [not null]
+  correo varchar(100) [unique, not null]
+  contrasena text [not null]
+  rol varchar(20) // 'conductor', 'tecnico', 'admin'
+}
+
+Table tipo_incidencia {
+  tipo_incidencia_id int [pk, increment]
+  nombre varchar(100) [unique, not null]
+  descripcion text
+}
+
+Table incidencia {
+  incidencia_id int [pk, increment]
+  vehiculo_id int [ref: > vehiculo.vehiculo_id]
+  usuario_id int [ref: > usuario.usuario_id]  // reporta
+  tipo_incidencia_id int [ref: > tipo_incidencia.tipo_incidencia_id]
+  descripcion text [not null]
+  prioridad varchar(10) // 'baja', 'media', 'alta'
+  estado varchar(20) [default: 'abierta']
+  fecha_reporte timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table historial_incidencia {
+  historial_id int [pk, increment]
+  incidencia_id int [ref: > incidencia.incidencia_id]
+  usuario_id int [ref: > usuario.usuario_id]
+  estado varchar(30)
+  observacion text
+  fecha timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table afectado {
+  afectado_id int [pk, increment]
+  incidencia_id int [ref: > incidencia.incidencia_id]
+  nombre varchar(100)
+  documento_identidad varchar(20)
+  tipo_tercero varchar(30) // 'persona', 'vehiculo', 'infraestructura', etc.
+  contacto varchar(100)
+  descripcion_danio text
+}
+
+Table reporte_aseguradora {
+  reporte_id int [pk, increment]
+  incidencia_id int [ref: > incidencia.incidencia_id]
+  aseguradora_id int [ref: > aseguradora.aseguradora_id]
+  fecha_envio timestamp [default: `CURRENT_TIMESTAMP`]
+  estado_envio varchar(20) [default: 'pendiente']  // 'enviado', 'fallido', etc.
+  asunto varchar(150)
+  cuerpo text
+  observaciones text
+}
+
+Table evidencia {
+  evidencia_id int [pk, increment]
+  incidencia_id int [ref: > incidencia.incidencia_id]
+  url_archivo text [not null]
+  tipo_archivo varchar(20) // 'imagen', 'video', 'documento'
+  fecha_subida timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+TABLE historial_uso_vehiculo {
+  historial_uso_id int [pk, increment]
+  vehiculo_id int [ref: > vehiculo.vehiculo_id]
+  usuario_id int [ref: > usuario.usuario_id]
+  numero_vueltas int
+  fecha_inicio timestamp [default: `CURRENT_TIMESTAMP`]
+  fecha_fin timestamp [null]  // NULL si sigue en uso
+}
