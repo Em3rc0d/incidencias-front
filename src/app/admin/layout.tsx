@@ -1,12 +1,6 @@
 // app/layout.tsx
 import Navbar from '@/components/custom/Navigation';
-import './globals.css';
 import Link from 'next/link';
-
-export const metadata = {
-  title: 'Mi App',
-  description: 'Sistema de Gestión',
-};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
