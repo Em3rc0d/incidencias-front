@@ -1,8 +1,5 @@
 // app/layout.tsx
-import Navbar from '@/components/custom/Navigation';
 import './globals.css';
-import Link from 'next/link';
-
 export const metadata = {
   title: 'Mi App',
   description: 'Sistema de Gestión',
@@ -11,7 +8,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className="pt-20 relative min-h-screen">
+      <body className="min-h-screen">
         {children}
       </body>
     </html>

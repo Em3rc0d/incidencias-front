@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState } from "react";
 import EvidenciasPage from "./evidences/page";
-import AfectadosPage from "../affected/page";
+import AfectadosPage from "./affected/page";
 
 export default function IncidenciasPage() {
   const [visibleEvidenceIndex, setVisibleEvidenceIndex] = useState<
