@@ -15,7 +15,7 @@ export default function AdminPage() {
     <>
       <h1 className="text-3xl font-bold mb-8">Panel de Administración</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/admin/users" passHref>
+        <Link href="/admin/personal" passHref>
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle>Usuarios</CardTitle>

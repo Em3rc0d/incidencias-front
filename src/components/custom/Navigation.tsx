@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [role, setRole] = useState<string | null>(null);
@@ -22,7 +24,6 @@ export default function Navbar() {
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold">Mi App</h1>
 
-        {/* Botón hamburguesa móvil */}
         <button
           className="md:hidden"
           onClick={toggleMenu}
@@ -31,13 +32,11 @@ export default function Navbar() {
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Menú en pantallas medianas y grandes */}
-        <ul className="hidden md:flex gap-6">
+        <ul className="hidden md:flex gap-6 items-center">
           <CommonLinks role={role} />
         </ul>
       </div>
 
-      {/* Menú desplegable para móviles */}
       {isOpen && (
         <ul className="md:hidden mt-4 flex flex-col gap-4">
           <CommonLinks role={role} />
@@ -47,53 +46,46 @@ export default function Navbar() {
   );
 }
 
-// Componente separado para mantener limpio el render
 function CommonLinks({ role }: { role: string }) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    document.cookie = "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    router.push("/");
+  };
+
   return (
     <>
-      <li>
-        <Link href="/incidence/register" className="hover:underline">
-          Inicio
-        </Link>
-      </li>
-      <li>
-        <Link href="/incidence" className="hover:underline">
-          Incidencias
-        </Link>
-      </li>
+      <NavItem href="/admin" label="Inicio" />
+      <NavItem href="/incidence" label="Incidencias" />
 
-      {role === "admin" && (
+      {role === "ADMIN" && (
         <>
-          <li>
-            <Link href="incidence/affected" className="hover:underline">
-              Afectados
-            </Link>
-          </li>
-          <li>
-            <Link href="affected/reports" className="hover:underline">
-              Reporte de afectados
-            </Link>
-          </li>
-          <li>
-            <Link href="/admin/vehicle" className="hover:underline">
-              Vehículos
-            </Link>
-          </li>
-          <li>
-            <Link href="/admin/vehicle/assign" className="hover:underline">
-              Asignar vehículo
-            </Link>
-          </li>
+          <NavItem href="/incidence/affected" label="Afectados" />
+          <NavItem href="/incidence/affected/reports" label="Reporte de afectados" />
+          <NavItem href="/admin/vehicle" label="Vehículos" />
+          <NavItem href="/admin/vehicle/assign" label="Asignar vehículo" />
+          <NavItem href="/admin/personal" label="Gestionar Personal" />
         </>
       )}
 
       {role === "user" && (
-        <li>
-          <Link href="incidence/affected" className="hover:underline">
-            Afectados
-          </Link>
-        </li>
+        <NavItem href="/incidence/affected" label="Afectados" />
       )}
+
+      <li>
+        <Button onClick={handleLogout}>LogOut</Button>
+      </li>
     </>
+  );
+}
+
+function NavItem({ href, label }: { href: string; label: string }) {
+  return (
+    <li>
+      <Link href={href} className="hover:underline">
+        {label}
+      </Link>
+    </li>
   );
 }

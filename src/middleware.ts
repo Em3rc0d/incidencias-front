@@ -15,7 +15,11 @@ export function middleware(request: NextRequest) {
   // }
 
   // Bloquea acceso no autorizado a /admin/*
-  if (pathname.startsWith("/admin") && role !== "admin") {
+  if (
+    (pathname.startsWith("/admin") ||
+      pathname.startsWith("/incidence/admin")) &&
+    role !== "ADMIN"
+  ) {
     return NextResponse.redirect(new URL("/not-authorized", request.url));
   }
 
@@ -28,5 +32,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*"],
+  matcher: ["/", "/admin/:path*", "/incidence/admin/:path*"],
 };
