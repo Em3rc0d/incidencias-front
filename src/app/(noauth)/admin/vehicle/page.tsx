@@ -59,7 +59,7 @@ export default function VehiclePage() {
     try {
       // Crear una copia del formulario sin el campo 'id'
       const { id, ...formSinId } = form;
-      form.empresaId=1;
+      form.empresaId = 1;
       const res = await fetch("http://localhost:8080/api/vehiculos", {
         method: "POST",
         headers: {
@@ -149,16 +149,18 @@ export default function VehiclePage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 p-4 space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Gestión de Vehículos</h1>
+    <div className="max-w-6xl mx-auto mt-12 px-6 space-y-10">
+      <h1 className="text-4xl font-bold text-gray-900">
+        🚗 Gestión de Vehículos
+      </h1>
 
       {/* Formulario */}
-      <div className="border rounded p-4 space-y-4 bg-white shadow">
-        <h2 className="text-xl font-semibold">
-          {editingId ? "Editar Vehículo" : "Registrar Vehículo"}
+      <div className="bg-white shadow-lg rounded-xl p-6 space-y-6 border border-gray-200">
+        <h2 className="text-2xl font-semibold text-gray-800">
+          {editingId ? "✏️ Editar Vehículo" : "➕ Registrar Vehículo"}
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             name="placa"
             placeholder="Placa"
@@ -194,7 +196,7 @@ export default function VehiclePage() {
             name="estado"
             value={form.estado}
             onChange={handleChange}
-            className="border rounded p-2"
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
@@ -202,42 +204,46 @@ export default function VehiclePage() {
           </select>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-4 pt-2">
           {editingId ? (
             <>
-              <Button onClick={handleUpdate}>Actualizar</Button>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleUpdate}
+              >
+                Actualizar
+              </Button>
               <Button variant="outline" onClick={resetForm}>
                 Cancelar
               </Button>
             </>
           ) : (
-            <Button onClick={handleAdd}>Registrar</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleAdd}
+            >
+              Registrar
+            </Button>
           )}
         </div>
       </div>
 
       {/* Lista */}
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-gray-700">
-          Lista de Vehículos
+      <div>
+        <h2 className="text-2xl font-semibold text-gray-800">
+          📋 Lista de Vehículos
         </h2>
-        <ul className="space-y-3">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
           {vehiculos.map((v) => (
-            <li
+            <div
               key={v.id}
-              className="border rounded p-4 bg-white shadow flex flex-col gap-1"
+              className="bg-white shadow-md rounded-lg p-5 border border-gray-200 space-y-2"
             >
               <p>
                 <strong>Placa:</strong> {v.placa}
               </p>
               <p>
-                <strong>Marca:</strong> {v.marca}
-              </p>
-              <p>
                 <strong>Modelo:</strong> {v.modelo}
-              </p>
-              <p>
-                <strong>Año:</strong> {v.anio}
               </p>
               <p>
                 <strong>Tipo:</strong> {v.tipo}
@@ -245,23 +251,38 @@ export default function VehiclePage() {
               <p>
                 <strong>Estado:</strong> {v.estado}
               </p>
-              <div className="flex gap-2 mt-2">
+
+              <details className="mt-2">
+                <summary className="cursor-pointer text-blue-600 hover:underline">
+                  Ver detalles
+                </summary>
+                <div className="mt-2 text-sm text-gray-700 space-y-1">
+                  <p>
+                    <strong>Marca:</strong> {v.marca}
+                  </p>
+                  <p>
+                    <strong>Año:</strong> {v.anio}
+                  </p>
+                  <p>
+                    <strong>ID Empresa:</strong> {v.empresaId}
+                  </p>
+                </div>
+              </details>
+
+              <div className="flex gap-2 pt-2">
                 <Button variant="outline" onClick={() => handleEdit(v)}>
                   Editar
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => {
-                    console.log("Eliminando vehículo con ID:", v.id);
-                    handleDelete(v.id)
-                  }}
+                  onClick={() => handleDelete(v.id)}
                 >
                   Eliminar
                 </Button>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );

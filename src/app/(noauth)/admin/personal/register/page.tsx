@@ -6,12 +6,40 @@ import { Button } from "@/components/ui/button";
 export default function RegisterPersonalPage() {
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
   const [rol, setRol] = useState("conductor");
+  const [empresaId, setEmpresaId] = useState("1");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ nombre, correo, rol });
-    // Aquí podrías enviar a una API o actualizar estado global
+
+    const usuario = {
+      nombre,
+      correo,
+      contrasena,
+      rol,
+      empresaId: Number(empresaId),
+    };
+
+    try {
+      const response = await fetch("http://localhost:8080/usuarios", {
+        method: "POST", // Cambia a PUT y añade /{id} si es actualización
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(usuario),
+      });
+
+      if (!response.ok) throw new Error("Error al registrar usuario");
+
+      const data = await response.json();
+      console.log("Usuario registrado:", data);
+      alert("Usuario registrado exitosamente.");
+    } catch (error) {
+      console.error(error);
+      alert("Error al registrar usuario.");
+    }
   };
 
   return (
@@ -39,18 +67,41 @@ export default function RegisterPersonalPage() {
           />
         </div>
         <div>
+          <label className="block font-medium">Contraseña</label>
+          <input
+            type="password"
+            className="w-full border px-3 py-2 rounded"
+            value={contrasena}
+            onChange={(e) => setContrasena(e.target.value)}
+            required
+          />
+        </div>
+        <div>
           <label className="block font-medium">Rol</label>
           <select
             className="w-full border px-3 py-2 rounded"
             value={rol}
             onChange={(e) => setRol(e.target.value)}
           >
-            <option value="conductor">Conductor</option>
-            <option value="tecnico">Técnico</option>
-            <option value="admin">Admin</option>
+            <option value="CHOFER">Chofer</option>
+            <option value="JEFE_INCIDENCIAS">Jefe de Incidencias</option>
+            <option value="ADMIN">Admin</option>
           </select>
         </div>
-        <Button type="submit" className="w-full">Registrar</Button>
+        <div>
+          <label className="block font-medium">Empresa ID</label>
+          <input
+            type="number"
+            className="w-full border px-3 py-2 rounded"
+            value={empresaId}
+            onChange={(e) => setEmpresaId(e.target.value)}
+            required
+            disabled
+          />
+        </div>
+        <Button type="submit" className="w-full">
+          Registrar
+        </Button>
       </form>
     </div>
   );
