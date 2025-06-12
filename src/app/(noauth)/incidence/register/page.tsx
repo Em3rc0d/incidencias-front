@@ -14,6 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import ComponenteConMapa from "./MapPick";
+import MapPick from "./MapPick";
 
 interface Afectado {
   incidenciaId?: string;
@@ -40,18 +43,35 @@ export default function Register() {
     },
   ]);
   const [evidencias, setEvidencias] = useState<File[]>([]);
-  const [ubicacion, setUbicacion] = useState<{ latitud: number | null; longitud: number | null }>({
+  const [ubicacion, setUbicacion] = useState<{
+    latitud: number | null;
+    longitud: number | null;
+  }>({
     latitud: null,
     longitud: null,
   });
+  const [usarUbicacionActual, setUsarUbicacionActual] = useState(false);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => setUbicacion({ latitud: coords.latitude, longitud: coords.longitude }),
-      (err) => console.warn("Error obteniendo ubicación:", err),
-      { enableHighAccuracy: true }
-    );
-  }, []);
+    if (usarUbicacionActual) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUbicacion({
+            latitud: position.coords.latitude,
+            longitud: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Error obteniendo la ubicación:", error);
+          alert("No se pudo obtener la ubicación. Verifica los permisos.");
+        }
+      );
+    }
+  }, [usarUbicacionActual]);
+
+  const handleMapClick = (lat: number, lng: number) => {
+    setUbicacion({ latitud: lat, longitud: lng });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -61,7 +81,11 @@ export default function Register() {
     }
   };
 
-  const updateAfectado = (index: number, field: keyof Afectado, value: string) => {
+  const updateAfectado = (
+    index: number,
+    field: keyof Afectado,
+    value: string
+  ) => {
     const nuevos = [...afectados];
     nuevos[index] = { ...nuevos[index], [field]: value };
     setAfectados(nuevos);
@@ -124,7 +148,10 @@ export default function Register() {
           });
 
           if (!res.ok) {
-            console.error(`Error guardando afectado ${afectado.nombre}:`, await res.text());
+            console.error(
+              `Error guardando afectado ${afectado.nombre}:`,
+              await res.text()
+            );
           }
         }
       }
@@ -134,11 +161,14 @@ export default function Register() {
           const formData = new FormData();
           formData.append("file", file);
           const fileType = file.type;
-          const resUpload = await fetch("http://localhost:8080/api/files/upload", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-          });
+          const resUpload = await fetch(
+            "http://localhost:8080/api/files/upload",
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: formData,
+            }
+          );
 
           if (!resUpload.ok) throw new Error("Error subiendo archivo");
 
@@ -168,15 +198,17 @@ export default function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">Registrar Incidencia</h1>
-
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 p-6 max-w-md mx-auto"
+    >
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Registrar Incidencia
+      </h1>
       <Label htmlFor="vehicle">Vehículo</Label>
       <Input id="vehicle" placeholder="AMX-124" disabled />
-
       <Label htmlFor="user">Usuario</Label>
       <Input id="user" placeholder="Juancito Perez" disabled />
-
       <Label htmlFor="incidenceType">Tipo de Incidencia</Label>
       <Select onValueChange={setIncidenceType}>
         <SelectTrigger className="w-full">
@@ -190,10 +222,11 @@ export default function Register() {
           </SelectGroup>
         </SelectContent>
       </Select>
-
       <Label htmlFor="description">Descripción</Label>
-      <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
-
+      <Textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
       <Label htmlFor="prioridad">Prioridad</Label>
       <Select onValueChange={setPriority}>
         <SelectTrigger className="w-full">
@@ -207,26 +240,63 @@ export default function Register() {
           </SelectGroup>
         </SelectContent>
       </Select>
-
-      {ubicacion.latitud && ubicacion.longitud && (
+      {usarUbicacionActual && ubicacion.latitud && ubicacion.longitud && (
         <div className="text-sm text-gray-600">
-          Ubicación: Lat {ubicacion.latitud.toFixed(6)} | Lon {ubicacion.longitud.toFixed(6)}
+          Ubicación: Lat {ubicacion.latitud.toFixed(6)} | Lon{" "}
+          {ubicacion.longitud.toFixed(6)}
         </div>
       )}
-
+      {!usarUbicacionActual && (
+        <>
+          <div>
+            <h2 className="text-lg font-semibold">Selecciona tu ubicación</h2>
+            <MapPick />
+          </div>
+        </>
+      )}
       {!huboAfectado ? (
-        <Button type="button" variant="outline" onClick={() => setHuboAfectado(true)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setHuboAfectado(true)}
+        >
           ¿Hubo algún afectado?
         </Button>
       ) : (
         afectados.map((afectado, index) => (
           <div key={index} className="border-t pt-4 mt-4 space-y-2">
-            <h2 className="text-lg font-semibold text-gray-700">Afectado #{index + 1}</h2>
-            <Input placeholder="Nombre" value={afectado.nombre} onChange={(e) => updateAfectado(index, "nombre", e.target.value)} />
-            <Input placeholder="Documento" value={afectado.documentoIdentidad} onChange={(e) => updateAfectado(index, "documentoIdentidad", e.target.value)} />
-            <Input placeholder="Contacto" value={afectado.contacto} onChange={(e) => updateAfectado(index, "contacto", e.target.value)} />
-            <Textarea placeholder="Daño" value={afectado.descripcionDanio} onChange={(e) => updateAfectado(index, "descripcionDanio", e.target.value)} />
-            <Select onValueChange={(val) => updateAfectado(index, "tipoTercero", val)}>
+            <h2 className="text-lg font-semibold text-gray-700">
+              Afectado #{index + 1}
+            </h2>
+            <Input
+              placeholder="Nombre"
+              value={afectado.nombre}
+              onChange={(e) => updateAfectado(index, "nombre", e.target.value)}
+            />
+            <Input
+              placeholder="Documento"
+              value={afectado.documentoIdentidad}
+              onChange={(e) =>
+                updateAfectado(index, "documentoIdentidad", e.target.value)
+              }
+            />
+            <Input
+              placeholder="Contacto"
+              value={afectado.contacto}
+              onChange={(e) =>
+                updateAfectado(index, "contacto", e.target.value)
+              }
+            />
+            <Textarea
+              placeholder="Daño"
+              value={afectado.descripcionDanio}
+              onChange={(e) =>
+                updateAfectado(index, "descripcionDanio", e.target.value)
+              }
+            />
+            <Select
+              onValueChange={(val) => updateAfectado(index, "tipoTercero", val)}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Tipo de tercero" />
               </SelectTrigger>
@@ -239,16 +309,13 @@ export default function Register() {
           </div>
         ))
       )}
-
       {huboAfectado && (
         <Button type="button" onClick={agregarAfectado} className="w-full">
           Agregar otro afectado
         </Button>
       )}
-
       <Label htmlFor="evidencias">Subir Evidencias</Label>
       <Input id="evidencias" type="file" multiple onChange={handleFileChange} />
-
       <Button type="submit" className="mt-4">
         Registrar
       </Button>

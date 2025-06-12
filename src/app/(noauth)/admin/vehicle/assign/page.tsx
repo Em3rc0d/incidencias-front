@@ -1,26 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Asegúrate que esto sea de shadcn/ui
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Table } from "@/components/ui/table";
+import { AsignacionesCarousel } from "./Carrousel";
 
 type Vehiculo = {
   id: number;
   placa: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  tipo: string;
+  estado: string;
 };
 
 type Conductor = {
   id: number;
   nombre: string;
+  correo: string;
+  rol: string;
+};
+
+type HistorialDTO = {
+  id?: number;
+  vehiculo: { id: number };
+  usuario: { id: number };
+  numeroVueltas: number;
+  dia: string;
+  hora: string;
 };
 
 type Asignacion = {
+  id?: number;
   dia: string;
   hora: string;
   vehiculo: Vehiculo;
@@ -36,8 +55,8 @@ const diasSemana = [
   "Sábado",
   "Domingo",
 ];
-
 const horas = [
+  "07:00",
   "08:00",
   "09:00",
   "10:00",
@@ -51,75 +70,172 @@ const horas = [
   "18:00",
 ];
 
-export default function VehicleAssignPage() {
-  const vehiculos: Vehiculo[] = [
-    { id: 1, placa: "ABC123" },
-    { id: 2, placa: "XYZ789" },
-  ];
-
-  const conductores: Conductor[] = [
-    { id: 1, nombre: "Juan Pérez" },
-    { id: 2, nombre: "Ana Torres" },
-  ];
-
+export default function Page() {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
-  const [form, setForm] = useState<{
-    dia: string;
-    hora: string;
-    vehiculoId: number;
-    conductorId: number;
-  }>({
-    dia: "Lunes",
-    hora: "08:00",
-    vehiculoId: vehiculos[0].id,
-    conductorId: conductores[0].id,
+  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
+  const [conductores, setConductores] = useState<Conductor[]>([]);
+  const [form, setForm] = useState({
+    dia: diasSemana[0],
+    hora: horas[0],
+    vehiculoId: 0,
+    conductorId: 0,
   });
+  const [modoEdicion, setModoEdicion] = useState<Asignacion | null>(null);
 
-  const handleChange = (name: string, value: string) => {
-    setForm((f) => ({
-      ...f,
-      [name]: name.includes("Id") ? parseInt(value) : value,
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [vehRes, condRes, histRes] = await Promise.all([
+          fetch("http://localhost:8080/api/vehiculos", fetchOptions()),
+          fetch("http://localhost:8080/api/usuarios", fetchOptions()),
+          fetch("http://localhost:8080/api/historial-uso", fetchOptions()),
+        ]);
+
+        if (!vehRes.ok || !condRes.ok || !histRes.ok)
+          throw new Error("Error al cargar datos");
+
+        const vehiculosData: Vehiculo[] = await vehRes.json();
+        const usuarios: any = await condRes.json();
+        const conductoresData = usuarios.filter((u: any) => u.rol === "CHOFER");
+        const historialData: HistorialDTO[] = await histRes.json();
+
+        setVehiculos(vehiculosData);
+        setConductores(conductoresData);
+
+        setForm((f) => ({
+          ...f,
+          vehiculoId: vehiculosData[0]?.id ?? 0,
+          conductorId: conductoresData[0]?.id ?? 0,
+        }));
+
+        const conv = historialData.map(
+          toAsignacion(vehiculosData, conductoresData)
+        );
+        console.log("Asignaciones convertidas:", conv);
+        setAsignaciones(conv);
+      } catch {
+        alert("Error al cargar datos");
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleChange = (campo: string, valor: string) => {
+    setForm((p) => ({
+      ...p,
+      [campo]: campo.includes("Id") ? parseInt(valor) : valor,
     }));
   };
 
-  const handleAsignar = () => {
+  const handleAsignar = async () => {
     const { dia, hora, vehiculoId, conductorId } = form;
-    const existe = asignaciones.find((a) => a.dia === dia && a.hora === hora);
-    if (existe) {
-      alert("Ya existe una asignación para ese día y hora.");
-      return;
+    const veh = vehiculos.find((v) => v.id === vehiculoId)!;
+    const cond = conductores.find((c) => c.id === conductorId)!;
+    const [h, m] = hora.split(":").map(Number);
+    const fi = new Date();
+    fi.setHours(h, m, 0, 0);
+    const ff = new Date(fi);
+    ff.setHours(fi.getHours() + 1);
+
+    const dto: HistorialDTO = {
+      vehiculo: { id: vehiculoId },
+      usuario: { id: conductorId },
+      numeroVueltas: 1,
+      dia,
+      hora,
+    };
+
+    try {
+      if (modoEdicion) {
+        await fetch(
+          `http://localhost:8080/api/historial-uso/${modoEdicion.id}`,
+          {
+            ...fetchOptions("PUT"),
+            body: JSON.stringify(dto),
+          }
+        );
+
+        setAsignaciones((prev) =>
+          prev.map((a) =>
+            a.id === modoEdicion.id
+              ? { ...modoEdicion, dia, hora, vehiculo: veh, conductor: cond }
+              : a
+          )
+        );
+        setModoEdicion(null);
+      } else {
+        if (asignaciones.some((a) => a.dia === dia && a.hora === hora))
+          return alert("Ya existe asignación en ese día y hora");
+
+        const res = await fetch("http://localhost:8080/api/historial-uso", {
+          ...fetchOptions("POST"),
+          body: JSON.stringify(dto),
+        });
+        const nuevo = await res.json();
+        setAsignaciones((a) => [
+          ...a,
+          { id: nuevo.id, dia, hora, vehiculo: veh, conductor: cond },
+        ]);
+      }
+    } catch {
+      alert("Error al guardar");
     }
-
-    const vehiculo = vehiculos.find((v) => v.id === vehiculoId)!;
-    const conductor = conductores.find((c) => c.id === conductorId)!;
-
-    setAsignaciones((prev) => [...prev, { dia, hora, vehiculo, conductor }]);
   };
 
-  const handleEliminar = (dia: string, hora: string) => {
-    setAsignaciones((prev) =>
-      prev.filter((a) => !(a.dia === dia && a.hora === hora))
-    );
+  const handleEliminar = async (id: string | number) => {
+    const numId = typeof id === "string" ? parseInt(id, 10) : id;
+    if (!numId) return;
+    try {
+      await fetch(
+        `http://localhost:8080/api/historial-uso/${numId}`,
+        fetchOptions("DELETE")
+      );
+      setAsignaciones((prev) => prev.filter((a) => a.id !== numId));
+    } catch {
+      alert("Error al eliminar");
+    }
   };
+
+  const fetchOptions = (method: string = "GET") => ({
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  });
+
+  const toAsignacion =
+    (vehiculos: Vehiculo[], conductores: Conductor[]) =>
+    (h: HistorialDTO): Asignacion => {
+      const dia = h.dia || diasSemana[0];
+      const hora = h.hora || horas[0];
+      const veh = vehiculos.find((v) => v.id === h.vehiculo.id)!;
+      const cond = conductores.find((c) => c.id === h.usuario.id)!;
+      return { id: h.id, dia, hora, vehiculo: veh, conductor: cond };
+    };
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-4 space-y-8">
-      <h1 className="text-3xl font-bold text-gray-800">Cronograma Semanal</h1>
+    <div className="max-w-4xl mx-auto mt-10 p-6 space-y-8">
+      <h1 className="text-3xl font-bold">Asignaciones Semanales</h1>
 
       <div className="bg-white rounded shadow p-6 space-y-4">
-        <h2 className="text-xl font-semibold">Asignar vehículo</h2>
-        <div className="flex flex-row gap-4">
+        <h2 className="text-xl font-semibold">
+          {modoEdicion ? "Editar Asignación" : "Nueva Asignación"}
+        </h2>
+        <div className="flex flex-wrap gap-4">
+          {/* Selects */}
           <Select
             value={form.dia}
-            onValueChange={(value) => handleChange("dia", value)}
+            onValueChange={(val) => handleChange("dia", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecciona día" />
+              <SelectValue placeholder="Día" />
             </SelectTrigger>
             <SelectContent>
-              {diasSemana.map((dia) => (
-                <SelectItem key={dia} value={dia}>
-                  {dia}
+              {diasSemana.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {d}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -127,30 +243,30 @@ export default function VehicleAssignPage() {
 
           <Select
             value={form.hora}
-            onValueChange={(value) => handleChange("hora", value)}
+            onValueChange={(val) => handleChange("hora", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecciona hora" />
+              <SelectValue placeholder="Hora" />
             </SelectTrigger>
             <SelectContent>
-              {horas.map((hora) => (
-                <SelectItem key={hora} value={hora}>
-                  {hora}
+              {horas.map((h) => (
+                <SelectItem key={h} value={h}>
+                  {h}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select
-            value={String(form.vehiculoId)}
-            onValueChange={(value) => handleChange("vehiculoId", value)}
+            value={form.vehiculoId.toString()}
+            onValueChange={(val) => handleChange("vehiculoId", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecciona vehículo" />
+              <SelectValue placeholder="Vehículo" />
             </SelectTrigger>
             <SelectContent>
               {vehiculos.map((v) => (
-                <SelectItem key={v.id} value={String(v.id)}>
+                <SelectItem key={v.id} value={v.id.toString()}>
                   {v.placa}
                 </SelectItem>
               ))}
@@ -158,72 +274,32 @@ export default function VehicleAssignPage() {
           </Select>
 
           <Select
-            value={String(form.conductorId)}
-            onValueChange={(value) => handleChange("conductorId", value)}
+            value={form.conductorId.toString()}
+            onValueChange={(val) => handleChange("conductorId", val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecciona conductor" />
+              <SelectValue placeholder="Conductor" />
             </SelectTrigger>
             <SelectContent>
               {conductores.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  {c.nombre}
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  {c?.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Button onClick={handleAsignar}>Asignar</Button>
+          <Button onClick={handleAsignar}>
+            {modoEdicion ? "Guardar cambios" : "Asignar"}
+          </Button>
         </div>
       </div>
 
-      <div className="space-y-8">
-        {diasSemana.map((dia) => {
-          const asignados = asignaciones.filter((a) => a.dia === dia);
-          return (
-            <section key={dia} className="bg-white rounded shadow p-4">
-              <h3 className="text-2xl font-semibold mb-4">{dia}</h3>
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr>
-                    <th className="border p-2">Hora</th>
-                    <th className="border p-2">Vehículo</th>
-                    <th className="border p-2">Conductor</th>
-                    <th className="border p-2">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {horas.map((hora) => {
-                    const asignacion = asignados.find((a) => a.hora === hora);
-                    return (
-                      <tr key={hora} className="even:bg-gray-50">
-                        <td className="border p-2">{hora}</td>
-                        <td className="border p-2">
-                          {asignacion ? asignacion.vehiculo.placa : "-"}
-                        </td>
-                        <td className="border p-2">
-                          {asignacion ? asignacion.conductor.nombre : "-"}
-                        </td>
-                        <td className="border p-2 text-center">
-                          {asignacion && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleEliminar(dia, hora)}
-                            >
-                              Quitar
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
-          );
-        })}
-      </div>
+      <AsignacionesCarousel
+        asignaciones={asignaciones}
+        setModoEdicion={setModoEdicion}
+        handleEliminar={handleEliminar}
+      />
     </div>
   );
 }

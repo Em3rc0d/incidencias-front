@@ -20,28 +20,33 @@ export default function Navbar() {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <nav className="bg-blue-600 text-white px-6 py-4 shadow-md fixed top-0 w-full z-50">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Mi App</h1>
+    <nav className="bg-blue-600 text-white px-6 py-4 shadow-lg fixed top-0 w-full z-50 backdrop-blur">
+      <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 className="text-2xl font-semibold tracking-wide">Mi App</h1>
 
         <button
-          className="md:hidden"
+          className="md:hidden p-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           onClick={toggleMenu}
           aria-label="Toggle menu"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={26} /> : <Menu size={26} />}
         </button>
 
-        <ul className="hidden md:flex gap-6 items-center">
+        <ul className="hidden md:flex gap-6 items-center text-sm font-medium">
           <CommonLinks role={role} />
         </ul>
       </div>
 
-      {isOpen && (
-        <ul className="md:hidden mt-4 flex flex-col gap-4">
+      {/* Menú móvil */}
+      <div
+        className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? "max-h-[500px] mt-4" : "max-h-0"
+        }`}
+      >
+        <ul className="flex flex-col gap-4 text-base font-medium">
           <CommonLinks role={role} />
         </ul>
-      )}
+      </div>
     </nav>
   );
 }
@@ -62,9 +67,12 @@ function CommonLinks({ role }: { role: string }) {
       {role === "ADMIN" && (
         <>
           <NavItem href="/incidence/affected" label="Afectados" />
-          <NavItem href="/incidence/affected/reports" label="Reporte de afectados" />
+          <NavItem
+            href="/incidence/affected/reports"
+            label="Reporte de Afectados"
+          />
           <NavItem href="/admin/vehicle" label="Vehículos" />
-          <NavItem href="/admin/vehicle/assign" label="Asignar vehículo" />
+          <NavItem href="/admin/vehicle/assign" label="Asignar Vehículo" />
           <NavItem href="/admin/personal" label="Gestionar Personal" />
         </>
       )}
@@ -74,7 +82,12 @@ function CommonLinks({ role }: { role: string }) {
       )}
 
       <li>
-        <Button onClick={handleLogout}>LogOut</Button>
+        <Button
+          onClick={handleLogout}
+          className="bg-white text-blue-600 hover:bg-gray-100 transition-all"
+        >
+          Cerrar Sesión
+        </Button>
       </li>
     </>
   );
@@ -83,7 +96,10 @@ function CommonLinks({ role }: { role: string }) {
 function NavItem({ href, label }: { href: string; label: string }) {
   return (
     <li>
-      <Link href={href} className="hover:underline">
+      <Link
+        href={href}
+        className="hover:underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+      >
         {label}
       </Link>
     </li>

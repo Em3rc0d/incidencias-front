@@ -5,6 +5,8 @@ import { Eye, EyeOff, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import EvidenciasPage from "./evidences/page";
 import AfectadosPage from "./affected/page";
+import dynamic from "next/dynamic";
+const MapPreview = dynamic(() => import("./MapPreview"), { ssr: false });
 
 type Incidencia = {
   id: number;
@@ -19,7 +21,9 @@ type Incidencia = {
 };
 
 export default function IncidenciasPage() {
-  const [visibleEvidenceIndex, setVisibleEvidenceIndex] = useState<number | null>(null);
+  const [visibleEvidenceIndex, setVisibleEvidenceIndex] = useState<
+    number | null
+  >(null);
   const [map, setMap] = useState(false);
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [incidenciaId, setIncidenciaId] = useState<number>(0);
@@ -82,19 +86,26 @@ export default function IncidenciasPage() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm text-gray-500">
-                  Vehículo: <span className="font-semibold">{i.vehiculo?.placa}</span>
+                  Vehículo:{" "}
+                  <span className="font-semibold">{i.vehiculo?.placa}</span>
                 </p>
-                <p className="text-lg font-semibold text-gray-800 mt-1">{i.descripcion}</p>
+                <p className="text-lg font-semibold text-gray-800 mt-1">
+                  {i.descripcion}
+                </p>
               </div>
 
               <div className="flex flex-col items-end gap-2">
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${prioridadStyles[i.prioridad]}`}
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    prioridadStyles[i.prioridad]
+                  }`}
                 >
                   Prioridad: {i.prioridad}
                 </span>
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${estadoStyles[i.estado]}`}
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    estadoStyles[i.estado]
+                  }`}
                 >
                   {i.estado}
                 </span>
@@ -102,10 +113,15 @@ export default function IncidenciasPage() {
             </div>
 
             <div className="mt-4 flex justify-end">
+              <Button type="button" onClick={() => {}} className="w-full sm:w-auto text-xs px-4 py-2 mx-2">
+                Reportar a la aseguradora
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => {
-                  setVisibleEvidenceIndex(visibleEvidenceIndex === index ? null : index);
+                  setVisibleEvidenceIndex(
+                    visibleEvidenceIndex === index ? null : index
+                  );
                   setIncidenciaId(i.id);
                 }}
               >
@@ -126,18 +142,20 @@ export default function IncidenciasPage() {
             {visibleEvidenceIndex === index && (
               <div className="mt-6 border-t pt-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-gray-600 font-medium">Detalles de la incidencia</p>
+                  <p className="text-gray-600 font-medium">
+                    Detalles de la incidencia
+                  </p>
                   <Button variant="secondary" onClick={() => setMap(!map)}>
                     {map ? "Ocultar Preview" : "Ver Preview"}
                   </Button>
                 </div>
 
                 {map && (
-                  <div className="border rounded-lg p-2 bg-gray-50">
-                    <img
-                      src="aspa roja.jpg"
-                      alt="Mapa o imagen referencial"
-                      className="w-full h-52 object-cover rounded"
+                  <div className="border rounded-lg bg-gray-50">
+                    <MapPreview
+                      lat={i.latitud}
+                      lng={i.longitud}
+                      descripcion={i.descripcion}
                     />
                   </div>
                 )}
