@@ -69,6 +69,13 @@ export default function AdminPage() {
       icono: <PlusCircle className="h-6 w-6 text-orange-500" />,
       ruta: "/incidence/register",
     },
+    {
+      titulo: "Historial de Incidencias Finalizadas",
+      descripcion: "Consulta el historial de incidencias",
+      detalle: "Revisa todas las incidencias registradas en el sistema.",
+      icono: <FileBarChart2 className="h-6 w-6 text-yellow-500" />,
+      ruta: "/incidence/admin/history",
+    },
   ];
 
   return (

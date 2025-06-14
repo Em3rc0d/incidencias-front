@@ -17,6 +17,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import ComponenteConMapa from "./MapPick";
 import MapPick from "./MapPick";
+import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 
 interface Afectado {
   incidenciaId?: string;
@@ -28,6 +30,7 @@ interface Afectado {
 }
 
 export default function Register() {
+  const router = useRouter();
   const [incidenceType, setIncidenceType] = useState("");
   const [priority, setPriority] = useState("");
   const [description, setDescription] = useState("");
@@ -51,6 +54,11 @@ export default function Register() {
     longitud: null,
   });
   const [usarUbicacionActual, setUsarUbicacionActual] = useState(false);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [vehiculos, setVehiculos] = useState<any[]>([]);
+  const [incidenceTypes, setIncidenceTypes] = useState<any[]>([]);
+  const [selectedVehiculoId, setSelectedVehiculoId] = useState("");
+  const [selectedUsuarioId, setSelectedUsuarioId] = useState("");
 
   useEffect(() => {
     if (usarUbicacionActual) {
@@ -68,6 +76,61 @@ export default function Register() {
       );
     }
   }, [usarUbicacionActual]);
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/usuarios", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        setUsuarios(data);
+      } catch (error) {
+        console.error("Error al cargar usuarios:", error);
+        alert("No se pudieron cargar los usuarios.");
+      }
+    };
+
+    const fetchVehiculos = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/vehiculos", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        setVehiculos(data);
+      } catch (error) {
+        console.error("Error al cargar vehículos:", error);
+        alert("No se pudieron cargar los vehículos.");
+      }
+    };
+    const fetchIncidenceTypes = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:8080/api/tipos-incidencia",
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const data = await response.json();
+        setIncidenceTypes(data);
+      } catch (error) {
+        console.error("Error al cargar tipos de incidencia:", error);
+        alert("No se pudieron cargar los tipos de incidencia.");
+      }
+    };
+
+    fetchUsuarios();
+    fetchVehiculos();
+    fetchIncidenceTypes();
+  }, []);
 
   const handleMapClick = (lat: number, lng: number) => {
     setUbicacion({ latitud: lat, longitud: lng });
@@ -110,9 +173,9 @@ export default function Register() {
     if (!token) return alert("Token no disponible");
 
     const payloadIncidencia = {
-      vehiculoId: 1,
-      usuarioId: 1,
-      tipoIncidenciaId: 1, // TODO: mapear según incidenceType
+      vehiculoId: parseInt(selectedVehiculoId),
+      usuarioId: parseInt(selectedUsuarioId),
+      tipoIncidenciaId: parseInt(incidenceType),
       descripcion: description,
       prioridad: priority,
       estado: "pendiente",
@@ -189,11 +252,15 @@ export default function Register() {
           });
         }
       }
-
-      alert("Incidencia registrada correctamente");
+      Swal.fire("Éxito", "Incidencia registrada correctamente", "success");
+      router.push("/incidence");
     } catch (err: any) {
       console.error("Error durante el registro:", err);
-      alert("Error al registrar incidencia.");
+      Swal.fire(
+        "Error",
+        "Ocurrió un error al registrar la incidencia.",
+        "error"
+      );
     }
   };
 
@@ -206,9 +273,33 @@ export default function Register() {
         Registrar Incidencia
       </h1>
       <Label htmlFor="vehicle">Vehículo</Label>
-      <Input id="vehicle" placeholder="AMX-124" disabled />
+      <Select onValueChange={setSelectedVehiculoId}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Selecciona un vehículo" />
+        </SelectTrigger>
+        <SelectContent>
+          {vehiculos.map((vehiculo) => (
+            <SelectItem key={vehiculo.id} value={vehiculo.id.toString()}>
+              {vehiculo.placa || `Vehículo #${vehiculo.id}`}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       <Label htmlFor="user">Usuario</Label>
-      <Input id="user" placeholder="Juancito Perez" disabled />
+      <Select onValueChange={setSelectedUsuarioId}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Selecciona un usuario" />
+        </SelectTrigger>
+        <SelectContent>
+          {usuarios.map((usuario) => (
+            <SelectItem key={usuario.id} value={usuario.id.toString()}>
+              {usuario.nombre}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       <Label htmlFor="incidenceType">Tipo de Incidencia</Label>
       <Select onValueChange={setIncidenceType}>
         <SelectTrigger className="w-full">
@@ -216,12 +307,15 @@ export default function Register() {
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value="accidente">Accidente</SelectItem>
-            <SelectItem value="mantenimiento">Mantenimiento</SelectItem>
-            <SelectItem value="averiaMecanica">Avería Mecánica</SelectItem>
+            {incidenceTypes.map((tipo) => (
+              <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                {tipo.nombre}
+              </SelectItem>
+            ))}
           </SelectGroup>
         </SelectContent>
       </Select>
+
       <Label htmlFor="description">Descripción</Label>
       <Textarea
         value={description}

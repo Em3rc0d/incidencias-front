@@ -32,7 +32,7 @@ export default function Navbar() {
     <nav className="bg-blue-600 text-white px-6 py-4 shadow-lg fixed top-0 w-full z-50 backdrop-blur">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <h1 className="text-2xl font-semibold tracking-wide">
-          {empresaNombre || "Empresa"} 
+          {empresaNombre || "Empresa"}
         </h1>
 
         <button
@@ -93,11 +93,10 @@ function CommonLinks({ role }: { role: string }) {
 
   return (
     <>
-      <NavItem href="/admin" label="Inicio" />
-      <NavItem href="/incidence" label="Incidencias" />
-
       {role === "ADMIN" && (
         <>
+          <NavItem href="/admin" label="Inicio" />
+          <NavItem href="/incidence" label="Incidencias" />
           <NavItem href="/incidence/affected" label="Afectados" />
           <NavItem
             href="/incidence/affected/reports"
@@ -109,8 +108,11 @@ function CommonLinks({ role }: { role: string }) {
         </>
       )}
 
-      {role === "user" && (
-        <NavItem href="/incidence/affected" label="Afectados" />
+      {role != "ADMIN" && (
+        <>
+          <NavItem href="/user" label="Inicio" />
+          <NavItem href="/incidence" label="Incidencias" />
+        </>
       )}
 
       <li>
