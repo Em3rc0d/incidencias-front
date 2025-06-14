@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 type Usuario = {
   id: number; // ← añade esto
@@ -15,15 +16,22 @@ type Usuario = {
 
 export default function UsuariosPage() {
   const router = useRouter();
-  const empresaNombre = "Orion";
-  const empresaIdFijo = 1;
-
+  const [empresaIdFijo, setEmpresaIdFijo] = useState("1");
+  const [empresaNombre, setEmpresaNombre] = useState("Empresa");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [editCorreo, setEditCorreo] = useState<string | null>(null);
   const [rolEditado, setRolEditado] = useState<Usuario["rol"]>("CHOFER");
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/usuarios", {
+    const id = Cookies.get("empresaId");
+    const nombre = Cookies.get("empresaNombre");
+
+    if (id) setEmpresaIdFijo(id);
+    if (nombre) setEmpresaNombre(nombre);
+  }, []);
+
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/usuarios/empresa/${empresaIdFijo}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -59,7 +67,7 @@ export default function UsuariosPage() {
       correo: usuarioEditado.correo,
       contrasena: "", // No se edita la contraseña
       rol: rolEditado,
-      empresaId: 1,
+      empresaId: Number(empresaIdFijo),
     };
 
     try {
@@ -94,9 +102,9 @@ export default function UsuariosPage() {
     }
   };
 
-  const registrarNuevo = () => {
-    router.push("personal/register");
-  };
+  // const registrarNuevo = () => {
+  //   router.push("personal/register");
+  // };
 
   const getRolClass = (rol: Usuario["rol"]) => {
     switch (rol) {

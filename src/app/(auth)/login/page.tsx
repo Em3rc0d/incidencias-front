@@ -29,12 +29,35 @@ export default function LoginPage() {
 
       const data = await response.json();
 
+      const user = await fetch(
+        `http://localhost:8080/api/usuarios/email/${correo}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
+          method: "GET",
+        }
+      );
+      if (!user.ok) {
+        console.error("Error al obtener usuario");
+        return;
+      }
+
+      const userData = await user.json();
+
       // Guardar en localStorage
+      localStorage.setItem("userId", userData.id.toString());
+      localStorage.setItem("empresaNombre", userData.empresa.nombre);
+      localStorage.setItem("empresaId", userData.empresa.id.toString());
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
       localStorage.setItem("role", data.role);
 
       // Guardar también en cookies
+      document.cookie = `userId=${userData.id}; path=/`;
+      document.cookie = `empresaNombre=${userData.empresa.nombre}; path=/`;
+      document.cookie = `empresaId=${userData.empresa.id}; path=/`;
       document.cookie = `token=${data.token}; path=/`;
       document.cookie = `username=${data.username}; path=/`;
       document.cookie = `role=${data.role}; path=/`;

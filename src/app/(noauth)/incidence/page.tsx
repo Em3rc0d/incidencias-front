@@ -6,6 +6,11 @@ import Link from "next/link";
 import EvidenciasPage from "./evidences/page";
 import AfectadosPage from "./affected/page";
 import dynamic from "next/dynamic";
+import Cookies from "js-cookie";
+import { toast } from "sonner";
+import Swal from "sweetalert2";
+import { Toaster } from "sonner";
+
 const MapPreview = dynamic(() => import("./MapPreview"), { ssr: false });
 
 type Incidencia = {
@@ -31,20 +36,41 @@ export default function IncidenciasPage() {
   useEffect(() => {
     const fetchIncidencias = async () => {
       const token = localStorage.getItem("token");
+      const role = Cookies.get("role");
+      const userId = Cookies.get("userId");
       if (!token) return;
 
       try {
-        const response = await fetch("http://localhost:8080/api/incidencias", {
+        const url =
+          role === "ADMIN"
+            ? "http://localhost:8080/api/incidencias"
+            : `http://localhost:8080/api/incidencias/user/${userId}`;
+
+        const response = await fetch(url, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
-        if (!response.ok) throw new Error("Error al obtener incidencias");
+
+        if (!response.ok) {
+          throw new Error("Error al obtener incidencias");
+        }
+
         const data = await response.json();
-        setIncidencias(data);
+        if (data.length === 0) {
+          toast.error("No hay incidencias registradas.");
+        } else {
+          setIncidencias(data);
+          toast.success("Incidencias cargadas correctamente");
+        }
       } catch (error) {
-        console.error("Error cargando incidencias:", error);
+        setIncidencias([]);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudieron obtener las incidencias.",
+        });
       }
     };
 
@@ -64,6 +90,7 @@ export default function IncidenciasPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      <Toaster richColors />
       <h1 className="text-3xl font-bold text-blue-700 mb-6 text-center">
         Estado de tus Incidencias
       </h1>
@@ -78,99 +105,109 @@ export default function IncidenciasPage() {
       </div>
 
       <ul className="space-y-4">
-        {incidencias.map((i, index) => (
-          <li
-            key={index}
-            className="border rounded-lg shadow-sm p-5 bg-white hover:shadow-md transition-all"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-gray-500">
-                  Vehículo:{" "}
-                  <span className="font-semibold">{i.vehiculo?.placa}</span>
-                </p>
-                <p className="text-lg font-semibold text-gray-800 mt-1">
-                  {i.descripcion}
-                </p>
-              </div>
-
-              <div className="flex flex-col items-end gap-2">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    prioridadStyles[i.prioridad]
-                  }`}
-                >
-                  Prioridad: {i.prioridad}
-                </span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    estadoStyles[i.estado]
-                  }`}
-                >
-                  {i.estado}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <Button type="button" onClick={() => {}} className="w-full sm:w-auto text-xs px-4 py-2 mx-2">
-                Reportar a la aseguradora
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setVisibleEvidenceIndex(
-                    visibleEvidenceIndex === index ? null : index
-                  );
-                  setIncidenciaId(i.id);
-                }}
-              >
-                {visibleEvidenceIndex === index ? (
-                  <>
-                    <EyeOff className="mr-2 h-4 w-4" />
-                    Ocultar detalles
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Ver detalles
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {visibleEvidenceIndex === index && (
-              <div className="mt-6 border-t pt-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-gray-600 font-medium">
-                    Detalles de la incidencia
+        {incidencias.length === 0 ? (
+          <p className="text-center text-gray-500 mt-10 text-sm">
+            No hay datos
+          </p>
+        ) : (
+          incidencias.map((i, index) => (
+            <li
+              key={index}
+              className="border rounded-lg shadow-sm p-5 bg-white hover:shadow-md transition-all"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Vehículo:{" "}
+                    <span className="font-semibold">{i.vehiculo?.placa}</span>
                   </p>
-                  <Button variant="secondary" onClick={() => setMap(!map)}>
-                    {map ? "Ocultar Preview" : "Ver Preview"}
-                  </Button>
+                  <p className="text-lg font-semibold text-gray-800 mt-1">
+                    {i.descripcion}
+                  </p>
                 </div>
 
-                {map && (
-                  <div className="border rounded-lg bg-gray-50">
-                    <MapPreview
-                      lat={i.latitud}
-                      lng={i.longitud}
-                      descripcion={i.descripcion}
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <AfectadosPage incidenciaId={incidenciaId} />
-                </div>
-
-                <div>
-                  <EvidenciasPage incidenciaId={incidenciaId} />
+                <div className="flex flex-col items-end gap-2">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      prioridadStyles[i.prioridad]
+                    }`}
+                  >
+                    Prioridad: {i.prioridad}
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      estadoStyles[i.estado]
+                    }`}
+                  >
+                    {i.estado}
+                  </span>
                 </div>
               </div>
-            )}
-          </li>
-        ))}
+
+              <div className="mt-4 flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => toast.info("Función pendiente")}
+                  className="w-full sm:w-auto text-xs px-4 py-2 mx-2"
+                >
+                  Reportar a la aseguradora
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setVisibleEvidenceIndex(
+                      visibleEvidenceIndex === index ? null : index
+                    );
+                    setIncidenciaId(i.id);
+                  }}
+                >
+                  {visibleEvidenceIndex === index ? (
+                    <>
+                      <EyeOff className="mr-2 h-4 w-4" />
+                      Ocultar detalles
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver detalles
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {visibleEvidenceIndex === index && (
+                <div className="mt-6 border-t pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-600 font-medium">
+                      Detalles de la incidencia
+                    </p>
+                    <Button variant="secondary" onClick={() => setMap(!map)}>
+                      {map ? "Ocultar Preview" : "Ver Preview"}
+                    </Button>
+                  </div>
+
+                  {map && (
+                    <div className="border rounded-lg bg-gray-50">
+                      <MapPreview
+                        lat={i.latitud}
+                        lng={i.longitud}
+                        descripcion={i.descripcion}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <AfectadosPage incidenciaId={incidenciaId} />
+                  </div>
+
+                  <div>
+                    <EvidenciasPage incidenciaId={incidenciaId} />
+                  </div>
+                </div>
+              )}
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );
