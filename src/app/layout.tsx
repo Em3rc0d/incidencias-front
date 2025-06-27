@@ -3,7 +3,7 @@ import './globals.css';
 import 'leaflet/dist/leaflet.css';
 
 export const metadata = {
-  title: 'Mi App',
+  title: 'Gestionador de Siniestros',
   description: 'Sistema de Gestión',
 };
 
