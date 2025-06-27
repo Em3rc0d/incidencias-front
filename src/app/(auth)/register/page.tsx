@@ -10,7 +10,7 @@ export default function RegisterPage() {
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
-  const [rol, setRol] = useState("USUARIO"); // O "ADMIN", según tu lógica
+  const [rol, setRol] = useState("CHOFER"); // O "ADMIN", según tu lógica
   const [empresaId, setEmpresaId] = useState(1); // Puedes hacerlo dinámico más adelante
   const router = useRouter();
 
@@ -18,6 +18,7 @@ export default function RegisterPage() {
     e.preventDefault();
 
     try {
+      // 1. REGISTRO
       const response = await fetch("http://localhost:8080/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,11 +30,55 @@ export default function RegisterPage() {
         return;
       }
 
-      const data = await response.json();
+      // 2. LOGIN AUTOMÁTICO
+      const responseLog = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, contrasena }),
+      });
+
+      if (!responseLog.ok) {
+        console.error("Error al iniciar sesión automáticamente");
+        return;
+      }
+
+      const data = await responseLog.json();
+
+      // 3. OBTENER USUARIO COMPLETO POR CORREO
+      const user = await fetch(
+        `http://localhost:8080/api/usuarios/email/${correo}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
+        }
+      );
+
+      if (!user.ok) {
+        console.error("Error al obtener datos del usuario");
+        return;
+      }
+
+      const userData = await user.json();
+
+      // 4. GUARDAR EN LOCALSTORAGE
+      localStorage.setItem("userId", userData.id.toString());
+      localStorage.setItem("empresaNombre", userData.empresa.nombre);
+      localStorage.setItem("empresaId", userData.empresa.id.toString());
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
       localStorage.setItem("role", data.role);
 
+      // 5. GUARDAR EN COOKIES
+      document.cookie = `userId=${userData.id}; path=/`;
+      document.cookie = `empresaNombre=${userData.empresa.nombre}; path=/`;
+      document.cookie = `empresaId=${userData.empresa.id}; path=/`;
+      document.cookie = `token=${data.token}; path=/`;
+      document.cookie = `username=${data.username}; path=/`;
+      document.cookie = `role=${data.role}; path=/`;
+
+      // 6. REDIRECCIÓN
       router.push("/");
     } catch (error) {
       console.error("Error de conexión:", error);
@@ -44,7 +89,9 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader>
-          <CardTitle className="text-center text-2xl">Panel de Registro</CardTitle>
+          <CardTitle className="text-center text-2xl">
+            Panel de Registro
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
@@ -86,6 +133,7 @@ export default function RegisterPage() {
                 value={rol}
                 onChange={(e) => setRol(e.target.value)}
                 required
+                readOnly
               />
             </div>
             <div>

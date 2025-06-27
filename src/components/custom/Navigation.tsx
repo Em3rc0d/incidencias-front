@@ -100,7 +100,7 @@ function CommonLinks({ role }: { role: string }) {
           <NavItem href="/incidence/affected" label="Afectados" />
           <NavItem
             href="/incidence/affected/reports"
-            label="Reporte de Afectados"
+            label="Reportes a Aseguradora"
           />
           <NavItem href="/admin/vehicle" label="Vehículos" />
           <NavItem href="/admin/vehicle/assign" label="Asignar Vehículo" />
