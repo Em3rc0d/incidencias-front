@@ -41,12 +41,13 @@ export default function IncidenciasPage() {
     const token = localStorage.getItem("token");
     const role = Cookies.get("role");
     const userId = Cookies.get("userId");
+    const empresaId = Cookies.get("empresaId");
     if (!token) return;
 
     try {
       const url =
         role === "ADMIN"
-          ? "http://localhost:8080/api/incidencias"
+          ? `http://localhost:8080/api/incidencias/empresa/${empresaId}`
           : `http://localhost:8080/api/incidencias/user/${userId}`;
 
       const response = await fetch(url, {
