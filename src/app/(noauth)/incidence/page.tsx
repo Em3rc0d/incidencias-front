@@ -152,7 +152,7 @@ export default function IncidenciasPage() {
               </div>
 
               <div className="mt-4 flex justify-end">
-                {i.estado === "PENDIENTE" ? (
+                {i.estado.toUpperCase() === "PENDIENTE" ? (
                   <Button
                     type="button"
                     onClick={() => openModal(i.id)}
@@ -233,7 +233,7 @@ export default function IncidenciasPage() {
           onOpenChange={setModalOpen}
           incidenciaId={selectedIncidenciaId}
           onSuccess={() => {
-            fetchIncidencias(); 
+            fetchIncidencias();
           }}
         />
       )}

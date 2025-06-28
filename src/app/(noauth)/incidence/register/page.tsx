@@ -10,15 +10,13 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import ComponenteConMapa from "./MapPick";
 import MapPick from "./MapPick";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
+import AutocompleteAfectado from "./AutoComplete";
 
 interface Afectado {
   incidenciaId?: string;
@@ -27,6 +25,7 @@ interface Afectado {
   tipoTercero: string;
   contacto: string;
   descripcionDanio: string;
+  esExistente?: boolean; // opcional
 }
 
 export default function Register() {
@@ -59,6 +58,9 @@ export default function Register() {
   const [incidenceTypes, setIncidenceTypes] = useState<any[]>([]);
   const [selectedVehiculoId, setSelectedVehiculoId] = useState("");
   const [selectedUsuarioId, setSelectedUsuarioId] = useState("");
+  const [afectadosDisponibles, setAfectadosDisponibles] = useState<Afectado[]>(
+    []
+  );
 
   useEffect(() => {
     if (usarUbicacionActual) {
@@ -126,10 +128,26 @@ export default function Register() {
         alert("No se pudieron cargar los tipos de incidencia.");
       }
     };
+    const fetchAfectados = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/afectados", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        setAfectadosDisponibles(data);
+      } catch (error) {
+        console.error("Error al cargar afectados:", error);
+        alert("No se pudieron cargar los afectados.");
+      }
+    };
 
     fetchUsuarios();
     fetchVehiculos();
     fetchIncidenceTypes();
+    fetchAfectados();
   }, []);
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -178,7 +196,7 @@ export default function Register() {
       tipoIncidenciaId: parseInt(incidenceType),
       descripcion: description,
       prioridad: priority,
-      estado: "pendiente",
+      estado: "PENDIENTE",
       fechaReporte: new Date().toISOString(),
       latitud: ubicacion.latitud,
       longitud: ubicacion.longitud,
@@ -362,18 +380,55 @@ export default function Register() {
             <h2 className="text-lg font-semibold text-gray-700">
               Afectado #{index + 1}
             </h2>
-            <Input
+            {/* <Input
               placeholder="Nombre"
               value={afectado.nombre}
               onChange={(e) => updateAfectado(index, "nombre", e.target.value)}
+            /> */}
+            <AutocompleteAfectado
+              index={index}
+              value={afectado.nombre}
+              listaAfectados={afectadosDisponibles}
+              onChange={(nombre, afectadoExistente) => {
+                updateAfectado(index, "nombre", nombre);
+
+                if (afectadoExistente) {
+                  updateAfectado(
+                    index,
+                    "documentoIdentidad",
+                    afectadoExistente.documentoIdentidad || ""
+                  );
+                  updateAfectado(
+                    index,
+                    "contacto",
+                    afectadoExistente.contacto || ""
+                  );
+                  updateAfectado(
+                    index,
+                    "tipoTercero",
+                    afectadoExistente.tipoTercero || ""
+                  );
+                  updateAfectado(
+                    index,
+                    "descripcionDanio",
+                    afectadoExistente.descripcionDanio || ""
+                  );
+                  const nuevos = [...afectados];
+                  nuevos[index].esExistente = true;
+                  setAfectados(nuevos);
+                }
+              }}
             />
+
             <Input
               placeholder="Documento"
               value={afectado.documentoIdentidad}
               onChange={(e) =>
                 updateAfectado(index, "documentoIdentidad", e.target.value)
               }
+              disabled={afectado.esExistente}
             />
+
             <Input
               placeholder="Contacto"
               value={afectado.contacto}

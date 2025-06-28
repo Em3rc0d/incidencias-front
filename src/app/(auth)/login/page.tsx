@@ -31,13 +31,16 @@ export default function LoginPage() {
 
       const data = await response.json();
 
-      const user = await fetch(`http://localhost:8080/api/usuarios/email/${correo}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data.token}`,
-        },
-        method: "GET",
-      });
+      const user = await fetch(
+        `http://localhost:8080/api/usuarios/email/${correo}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
+          method: "GET",
+        }
+      );
 
       if (!user.ok) {
         console.error("Error al obtener usuario");
@@ -107,7 +110,10 @@ export default function LoginPage() {
 
               <p className="text-center text-sm text-gray-600">
                 ¿No tienes cuenta?{" "}
-                <Link href="/register" className="text-blue-600 hover:underline">
+                <Link
+                  href="/register"
+                  className="text-blue-600 hover:underline"
+                >
                   Regístrate aquí
                 </Link>
               </p>
