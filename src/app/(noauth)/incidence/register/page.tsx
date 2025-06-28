@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Plus } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +21,7 @@ import ComponenteConMapa from "./MapPick";
 import MapPick from "./MapPick";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
+import AfectadoSelector from "./AfectadoSelector";
 
 interface Afectado {
   incidenciaId?: string;
@@ -59,6 +62,27 @@ export default function Register() {
   const [incidenceTypes, setIncidenceTypes] = useState<any[]>([]);
   const [selectedVehiculoId, setSelectedVehiculoId] = useState("");
   const [selectedUsuarioId, setSelectedUsuarioId] = useState("");
+  const [afectadosExistentes, setAfectadosExistentes] = useState<Afectado[]>(
+    []
+  );
+
+  useEffect(() => {
+    const fetchAfectados = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/afectados", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await res.json();
+        setAfectadosExistentes(data);
+      } catch (err) {
+        console.error("Error al obtener afectados existentes", err);
+      }
+    };
+
+    fetchAfectados();
+  }, []);
 
   useEffect(() => {
     if (usarUbicacionActual) {
@@ -264,154 +288,245 @@ export default function Register() {
     }
   };
 
+  const handleSelectAfectado = (index: number, seleccionado: Afectado) => {
+    const nuevos = [...afectados];
+    nuevos[index] = { ...seleccionado };
+    setAfectados(nuevos);
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 p-6 max-w-md mx-auto"
+      className="flex flex-col gap-6 p-6 md:p-8 bg-white shadow-md rounded-xl max-w-2xl mx-auto"
     >
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+      <h1 className="text-3xl font-bold text-blue-700 text-center">
         Registrar Incidencia
       </h1>
-      <Label htmlFor="vehicle">Vehículo</Label>
-      <Select onValueChange={setSelectedVehiculoId}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecciona un vehículo" />
-        </SelectTrigger>
-        <SelectContent>
-          {vehiculos.map((vehiculo) => (
-            <SelectItem key={vehiculo.id} value={vehiculo.id.toString()}>
-              {vehiculo.placa || `Vehículo #${vehiculo.id}`}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
 
-      <Label htmlFor="user">Usuario</Label>
-      <Select onValueChange={setSelectedUsuarioId}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecciona un usuario" />
-        </SelectTrigger>
-        <SelectContent>
-          {usuarios.map((usuario) => (
-            <SelectItem key={usuario.id} value={usuario.id.toString()}>
-              {usuario.nombre}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Label htmlFor="incidenceType">Tipo de Incidencia</Label>
-      <Select onValueChange={setIncidenceType}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecciona una incidencia" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {incidenceTypes.map((tipo) => (
-              <SelectItem key={tipo.id} value={tipo.id.toString()}>
-                {tipo.nombre}
+      {/* === Vehículo === */}
+      <div>
+        <Label htmlFor="vehicle" className="mb-1 block text-sm text-gray-700">
+          Vehículo
+        </Label>
+        <Select onValueChange={setSelectedVehiculoId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecciona un vehículo" />
+          </SelectTrigger>
+          <SelectContent>
+            {vehiculos.map((vehiculo) => (
+              <SelectItem key={vehiculo.id} value={vehiculo.id.toString()}>
+                {vehiculo.placa || `Vehículo #${vehiculo.id}`}
               </SelectItem>
             ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Label htmlFor="description">Descripción</Label>
-      <Textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <Label htmlFor="prioridad">Prioridad</Label>
-      <Select onValueChange={setPriority}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecciona la prioridad" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem value="alta">Alta</SelectItem>
-            <SelectItem value="media">Media</SelectItem>
-            <SelectItem value="baja">Baja</SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-      {usarUbicacionActual && ubicacion.latitud && ubicacion.longitud && (
-        <div className="text-sm text-gray-600">
-          Ubicación: Lat {ubicacion.latitud.toFixed(6)} | Lon{" "}
-          {ubicacion.longitud.toFixed(6)}
+      {/* === Usuario === */}
+      <div>
+        <Label htmlFor="user" className="mb-1 block text-sm text-gray-700">
+          Usuario
+        </Label>
+        <Select onValueChange={setSelectedUsuarioId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecciona un usuario" />
+          </SelectTrigger>
+          <SelectContent>
+            {usuarios.map((usuario) => (
+              <SelectItem key={usuario.id} value={usuario.id.toString()}>
+                {usuario.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* === Tipo y Descripción === */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="incidenceType">Tipo de Incidencia</Label>
+          <Select onValueChange={setIncidenceType}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecciona un tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              {incidenceTypes.map((tipo) => (
+                <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                  {tipo.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
-      {!usarUbicacionActual && (
-        <>
-          <div>
-            <h2 className="text-lg font-semibold">Selecciona tu ubicación</h2>
-            <MapPick />
-          </div>
-        </>
-      )}
-      {!huboAfectado ? (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setHuboAfectado(true)}
-        >
-          ¿Hubo algún afectado?
-        </Button>
-      ) : (
-        afectados.map((afectado, index) => (
-          <div key={index} className="border-t pt-4 mt-4 space-y-2">
-            <h2 className="text-lg font-semibold text-gray-700">
-              Afectado #{index + 1}
+
+        <div>
+          <Label htmlFor="priority">Prioridad</Label>
+          <Select onValueChange={setPriority}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecciona prioridad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="alta">Alta</SelectItem>
+              <SelectItem value="media">Media</SelectItem>
+              <SelectItem value="baja">Baja</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Descripción</Label>
+        <Textarea
+          id="description"
+          placeholder="Describe brevemente lo ocurrido..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+
+      {/* === Ubicación === */}
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-gray-800">Ubicación</h2>
+        {usarUbicacionActual && ubicacion.latitud && ubicacion.longitud ? (
+          <p className="text-sm text-gray-600">
+            Latitud: {ubicacion.latitud.toFixed(6)} | Longitud:{" "}
+            {ubicacion.longitud.toFixed(6)}
+          </p>
+        ) : (
+          <MapPick />
+        )}
+      </div>
+
+      {/* === Afectados === */}
+      <div className="space-y-6">
+        {!huboAfectado ? (
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => setHuboAfectado(true)}
+            className="w-full"
+          >
+            ¿Hubo algún afectado?
+          </Button>
+        ) : (
+          <>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Información de Afectados
             </h2>
-            <Input
-              placeholder="Nombre"
-              value={afectado.nombre}
-              onChange={(e) => updateAfectado(index, "nombre", e.target.value)}
-            />
-            <Input
-              placeholder="Documento"
-              value={afectado.documentoIdentidad}
-              onChange={(e) =>
-                updateAfectado(index, "documentoIdentidad", e.target.value)
-              }
-            />
-            <Input
-              placeholder="Contacto"
-              value={afectado.contacto}
-              onChange={(e) =>
-                updateAfectado(index, "contacto", e.target.value)
-              }
-            />
-            <Textarea
-              placeholder="Daño"
-              value={afectado.descripcionDanio}
-              onChange={(e) =>
-                updateAfectado(index, "descripcionDanio", e.target.value)
-              }
-            />
-            <Select
-              onValueChange={(val) => updateAfectado(index, "tipoTercero", val)}
+
+            {afectados.map((afectado, index) => (
+              <Card key={index} className="border bg-gray-50">
+                <CardHeader>
+                  <CardTitle className="text-base text-gray-700">
+                    Afectado #{index + 1}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Campos editables que se autocompletan */}
+                  <div>
+                    <Label>Nombre</Label>
+                    <AfectadoSelector
+                      index={index}
+                      value={afectado.nombre}
+                      onSelectAfectado={(idx:any, datos:any) => {
+                        const nuevos = [...afectados];
+                        nuevos[idx] = datos;
+                        setAfectados(nuevos);
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Documento de Identidad</Label>
+                    <Input
+                      placeholder="DNI o RUC"
+                      value={afectado.documentoIdentidad}
+                      onChange={(e) =>
+                        updateAfectado(
+                          index,
+                          "documentoIdentidad",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Contacto</Label>
+                    <Input
+                      placeholder="Teléfono o correo"
+                      value={afectado.contacto}
+                      onChange={(e) =>
+                        updateAfectado(index, "contacto", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Tipo de tercero</Label>
+                    <Select
+                      value={afectado.tipoTercero}
+                      onValueChange={(val) =>
+                        updateAfectado(index, "tipoTercero", val)
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona una opción" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="persona">Persona</SelectItem>
+                        <SelectItem value="vehiculo">Vehículo</SelectItem>
+                        <SelectItem value="infraestructura">
+                          Infraestructura
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Descripción del daño</Label>
+                    <Textarea
+                      placeholder="Describe el tipo de daño ocasionado"
+                      value={afectado.descripcionDanio}
+                      onChange={(e) =>
+                        updateAfectado(
+                          index,
+                          "descripcionDanio",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            <Button
+              type="button"
+              onClick={agregarAfectado}
+              className="w-full flex items-center gap-2"
+              variant="outline"
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Tipo de tercero" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="persona">Persona</SelectItem>
-                <SelectItem value="vehiculo">Vehículo</SelectItem>
-                <SelectItem value="infraestructura">Infraestructura</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        ))
-      )}
-      {huboAfectado && (
-        <Button type="button" onClick={agregarAfectado} className="w-full">
-          Agregar otro afectado
-        </Button>
-      )}
-      <Label htmlFor="evidencias">Subir Evidencias</Label>
-      <Input id="evidencias" type="file" multiple onChange={handleFileChange} />
-      <Button type="submit" className="mt-4">
-        Registrar
+              <Plus className="h-4 w-4" /> Agregar otro afectado
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* === Evidencias === */}
+      <div>
+        <Label htmlFor="evidencias">Evidencias</Label>
+        <Input
+          id="evidencias"
+          type="file"
+          multiple
+          onChange={handleFileChange}
+        />
+      </div>
+
+      {/* === Botón Final === */}
+      <Button type="submit" className="w-full mt-4">
+        Registrar Incidencia
       </Button>
     </form>
   );
