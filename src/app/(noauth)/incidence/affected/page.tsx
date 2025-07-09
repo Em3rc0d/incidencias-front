@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Afectado = {
   nombre: string;
@@ -52,34 +54,45 @@ export default function AfectadosPage({ incidenciaId }: Props) {
   }, [incidenciaId]);
 
   return (
-    <div className="max-w-3xl mx-auto my-auto px-4">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-        Afectados
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold text-center text-blue-700 mb-8">
+        Lista de Afectados
       </h1>
 
       {loading ? (
-        <p className="text-center text-gray-500">Cargando...</p>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
       ) : afectados.length === 0 ? (
-        <p className="text-center text-gray-500">
-          No hay afectados registrados.
-        </p>
+        <div className="text-center text-gray-500 text-sm">
+          No hay afectados registrados para esta incidencia.
+        </div>
       ) : (
         <ul className="space-y-4">
-          {afectados.map((a, i) => (
-            <li key={i} className="border rounded-lg p-4 bg-white shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold text-gray-800">
-                  {a.nombre}
-                </h2>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    tipoColor[a.tipoTercero] || "bg-gray-100 text-gray-800"
+          {afectados.map((afectado, i) => (
+            <li
+              key={i}
+              className="rounded-xl border border-gray-200 bg-white shadow-sm p-5 transition hover:shadow-md"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    {afectado.nombre}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {afectado.descripcionDanio}
+                  </p>
+                </div>
+                <Badge
+                  className={`text-xs font-medium px-3 py-1 rounded-full capitalize ${
+                    tipoColor[afectado.tipoTercero] || "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {a.tipoTercero}
-                </span>
+                  {afectado.tipoTercero}
+                </Badge>
               </div>
-              <p className="text-sm text-gray-600">{a.descripcionDanio}</p>
             </li>
           ))}
         </ul>

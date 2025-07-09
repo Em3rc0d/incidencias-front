@@ -79,23 +79,29 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-4xl font-extrabold text-blue-700 mb-10 text-center">
-        Panel de Administración {empresa}
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center text-blue-800 mb-12">
+        Panel de Administración de {empresa}
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {opciones.map((opcion, index) => (
-          <Link href={opcion.ruta} key={index}>
-            <Card className="cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200">
-              <CardHeader className="flex flex-row items-center gap-4">
-                {opcion.icono}
+          <Link href={opcion.ruta} key={index} className="group">
+            <Card className="h-full cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 rounded-2xl">
+              <CardHeader className="flex flex-row items-start gap-4">
+                <div className="p-2 bg-gray-100 rounded-xl group-hover:bg-blue-50 transition">
+                  {opcion.icono}
+                </div>
                 <div>
-                  <CardTitle>{opcion.titulo}</CardTitle>
-                  <CardDescription>{opcion.descripcion}</CardDescription>
+                  <CardTitle className="text-lg font-semibold text-gray-800 group-hover:text-blue-700">
+                    {opcion.titulo}
+                  </CardTitle>
+                  <CardDescription className="text-sm text-gray-500">
+                    {opcion.descripcion}
+                  </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0 pb-4 px-6">
                 <p className="text-sm text-gray-600">{opcion.detalle}</p>
               </CardContent>
             </Card>

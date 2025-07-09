@@ -1,3 +1,4 @@
+// Refactor de "VehiclePage"
 "use client";
 
 import { useState, useEffect } from "react";
@@ -88,10 +89,12 @@ export default function VehiclePage() {
   const handleUpdate = async () => {
     const token = localStorage.getItem("token");
     if (!token || editingId === null) return;
+    if (!token || editingId === null) return;
     try {
       const res = await fetch(
         `http://localhost:8080/api/vehiculos/${editingId}`,
         {
+          method: "PUT",
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -102,9 +105,7 @@ export default function VehiclePage() {
       );
       if (res.ok) {
         const actualizado = await res.json();
-        setVehiculos((prev) =>
-          prev.map((v) => (v.id === actualizado.id ? actualizado : v))
-        );
+        setVehiculos((prev) => prev.map((v) => v.id === actualizado.id ? actualizado : v));
         resetForm();
       }
     } catch (error) {
@@ -117,7 +118,7 @@ export default function VehiclePage() {
     setEditingId(vehiculo.id);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: any) => {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
@@ -309,6 +310,6 @@ export default function VehiclePage() {
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
