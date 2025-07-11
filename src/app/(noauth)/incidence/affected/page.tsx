@@ -42,7 +42,20 @@ export default function AfectadosPage({ incidenciaId }: Props) {
 
         if (!response.ok) throw new Error("Error al obtener afectados");
         const data = await response.json();
-        setAfectados(data);
+
+        // Elimina duplicados por combinación de nombre, tipoTercero y descripcionDanio
+        const unicos = data.filter(
+          (item: Afectado, index: number, self: Afectado[]) =>
+            index ===
+            self.findIndex(
+              (t) =>
+                t.nombre === item.nombre &&
+                t.tipoTercero === item.tipoTercero &&
+                t.descripcionDanio === item.descripcionDanio
+            )
+        );
+
+        setAfectados(unicos);
       } catch (error) {
         console.error("Error al obtener los afectados:", error);
       } finally {
@@ -87,7 +100,8 @@ export default function AfectadosPage({ incidenciaId }: Props) {
                 </div>
                 <Badge
                   className={`text-xs font-medium px-3 py-1 rounded-full capitalize ${
-                    tipoColor[afectado.tipoTercero] || "bg-gray-100 text-gray-800"
+                    tipoColor[afectado.tipoTercero] ||
+                    "bg-gray-100 text-gray-800"
                   }`}
                 >
                   {afectado.tipoTercero}

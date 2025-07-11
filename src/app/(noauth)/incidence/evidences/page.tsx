@@ -46,9 +46,13 @@ export default function EvidenciasPage({ incidenciaId }: Props) {
   }, [incidenciaId]);
 
   const isImage = (tipo: string) =>
-    ["imagen", "image", "jpg", "jpeg", "png", "gif"].includes(
-      tipo.toLowerCase()
+    ["imagen", "image", "jpg", "jpeg", "png", "gif", "webp"].some((ext) =>
+      tipo.toLowerCase().includes(ext)
     );
+
+  const resolveUrl = (url: string) => {
+    return url.startsWith("/") ? url : `/${url}`;
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -66,13 +70,13 @@ export default function EvidenciasPage({ incidenciaId }: Props) {
             <li key={i} className="border rounded-lg bg-white shadow-sm p-4">
               {isImage(e.tipoArchivo) ? (
                 <img
-                  src={e.urlArchivo}
+                  src={resolveUrl(e.urlArchivo)}
                   alt={`Evidencia ${i + 1}`}
                   className="w-full h-48 object-cover rounded mb-2"
                 />
               ) : (
                 <a
-                  href={e.urlArchivo}
+                  href={resolveUrl(e.urlArchivo)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline text-sm break-all"
@@ -80,7 +84,6 @@ export default function EvidenciasPage({ incidenciaId }: Props) {
                   {e.urlArchivo}
                 </a>
               )}
-
               <div className="flex justify-between items-center mt-2">
                 <span className="text-xs text-gray-600 capitalize">
                   {e.tipoArchivo}

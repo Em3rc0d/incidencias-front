@@ -392,7 +392,7 @@ export default function Register() {
             {ubicacion.longitud.toFixed(6)}
           </p>
         ) : (
-          <MapPick />
+          <MapPick ubicacion={ubicacion} onUbicacionChange={setUbicacion} />
         )}
       </div>
 

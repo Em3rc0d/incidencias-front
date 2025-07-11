@@ -55,13 +55,13 @@ export default function AdminPage() {
       icono: <AlertTriangle className="h-6 w-6 text-red-600" />,
       ruta: "/incidence",
     },
-    {
-      titulo: "Registrar Vehículo",
-      descripcion: "Agrega un nuevo vehículo",
-      detalle: "Completa el formulario para registrar un nuevo vehículo.",
-      icono: <PlusCircle className="h-6 w-6 text-green-500" />,
-      ruta: "/admin/vehicle/register",
-    },
+    // {
+    //   titulo: "Registrar Vehículo",
+    //   descripcion: "Agrega un nuevo vehículo",
+    //   detalle: "Completa el formulario para registrar un nuevo vehículo.",
+    //   icono: <PlusCircle className="h-6 w-6 text-green-500" />,
+    //   ruta: "/admin/vehicle/register",
+    // },
     {
       titulo: "Registrar Incidencia",
       descripcion: "Agrega una nueva incidencia",

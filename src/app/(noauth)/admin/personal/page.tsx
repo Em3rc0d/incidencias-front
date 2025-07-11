@@ -74,7 +74,9 @@ export default function UsuariosPage() {
       const data = await res.json();
 
       setUsuarios((prev) =>
-        prev.map((u) => (u.id === usuarioEditado.id ? { ...u, rol: data.rol } : u))
+        prev.map((u) =>
+          u.id === usuarioEditado.id ? { ...u, rol: data.rol } : u
+        )
       );
       setEditCorreo(null);
     } catch (error) {
@@ -104,46 +106,55 @@ export default function UsuariosPage() {
       </div>
 
       <div className="space-y-4">
-        {usuarios.map((u) => (
-          <div key={u.correo} className="bg-white p-6 rounded-xl shadow-md">
-            {editCorreo === u.correo ? (
-              <>
-                <h2 className="text-lg font-semibold">{u.nombre}</h2>
-                <p className="text-sm text-gray-600">{u.correo}</p>
-                <select
-                  className="mt-2 w-full border p-2 rounded"
-                  value={rolEditado}
-                  onChange={(e) =>
-                    setRolEditado(e.target.value as Usuario["rol"])
-                  }
-                >
-                  <option value="CHOFER">Chofer</option>
-                  <option value="JEFE_INCIDENCIAS">Jefe de Incidencias</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={saveChanges}>Guardar</Button>
-                  <Button variant="outline" onClick={() => setEditCorreo(null)}>
-                    Cancelar
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg font-semibold">{u.nombre}</h2>
-                <p className="text-sm text-gray-600">{u.correo}</p>
-                <span className={`text-sm font-semibold ${getRolClass(u.rol)}`}>
-                  Rol: {u.rol}
-                </span>
-                <div className="mt-2">
-                  <Button variant="outline" onClick={() => startEdit(u)}>
-                    Editar
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+        {usuarios
+          .filter((u: any) => u.rol !== "ADMIN")
+          .map((u) => (
+            <div key={u.correo} className="bg-white p-6 rounded-xl shadow-md">
+              {editCorreo === u.correo ? (
+                <>
+                  <h2 className="text-lg font-semibold">{u.nombre}</h2>
+                  <p className="text-sm text-gray-600">{u.correo}</p>
+                  <select
+                    className="mt-2 w-full border p-2 rounded"
+                    value={rolEditado}
+                    onChange={(e) =>
+                      setRolEditado(e.target.value as Usuario["rol"])
+                    }
+                  >
+                    <option value="CHOFER">Chofer</option>
+                    <option value="JEFE_INCIDENCIAS">
+                      Jefe de Incidencias
+                    </option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                  <div className="flex gap-2 mt-4">
+                    <Button onClick={saveChanges}>Guardar</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditCorreo(null)}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg font-semibold">{u.nombre}</h2>
+                  <p className="text-sm text-gray-600">{u.correo}</p>
+                  <span
+                    className={`text-sm font-semibold ${getRolClass(u.rol)}`}
+                  >
+                    Rol: {u.rol}
+                  </span>
+                  <div className="mt-2">
+                    <Button variant="outline" onClick={() => startEdit(u)}>
+                      Editar
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
       </div>
     </section>
   );

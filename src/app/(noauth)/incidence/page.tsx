@@ -37,6 +37,10 @@ export default function IncidenciasPage() {
   const [selectedIncidenciaId, setSelectedIncidenciaId] = useState<
     number | null
   >(null);
+  const [filter, setFilter] = useState<"TODOS" | "PENDIENTE" | "NOTIFICADO">(
+    "TODOS"
+  );
+
   const fetchIncidencias = async () => {
     const token = localStorage.getItem("token");
     const role = Cookies.get("role");
@@ -110,6 +114,35 @@ export default function IncidenciasPage() {
           </Button>
         </Link>
       </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4 mb-4">
+        <Link href="/incidence/register">
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Crear incidencia
+          </Button>
+        </Link>
+
+        <div className="flex gap-2">
+          <Button
+            variant={filter === "TODOS" ? "default" : "outline"}
+            onClick={() => setFilter("TODOS")}
+          >
+            Todas
+          </Button>
+          <Button
+            variant={filter === "PENDIENTE" ? "default" : "outline"}
+            onClick={() => setFilter("PENDIENTE")}
+          >
+            Pendientes
+          </Button>
+          <Button
+            variant={filter === "NOTIFICADO" ? "default" : "outline"}
+            onClick={() => setFilter("NOTIFICADO")}
+          >
+            Notificadas
+          </Button>
+        </div>
+      </div>
 
       <ul className="space-y-4">
         {incidencias.length === 0 ? (
@@ -117,114 +150,116 @@ export default function IncidenciasPage() {
             No hay datos
           </p>
         ) : (
-          incidencias.map((i, index) => (
-            <li
-              key={index}
-              className="border rounded-lg shadow-sm p-5 bg-white hover:shadow-md transition-all"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm text-gray-500">
-                    Vehículo:{" "}
-                    <span className="font-semibold">{i.vehiculo?.placa}</span>
-                  </p>
-                  <p className="text-lg font-semibold text-gray-800 mt-1">
-                    {i.descripcion}
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-end gap-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      prioridadStyles[i.prioridad]
-                    }`}
-                  >
-                    Prioridad: {i.prioridad}
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      estadoStyles[i.estado]
-                    }`}
-                  >
-                    {i.estado}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                {i.estado.toUpperCase() === "PENDIENTE" ? (
-                  <Button
-                    type="button"
-                    onClick={() => openModal(i.id)}
-                    className="w-full sm:w-auto text-xs px-4 py-2 mx-2"
-                  >
-                    Reportar a la aseguradora
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    disabled
-                    className="w-full sm:w-auto text-xs px-4 py-2 mx-2 opacity-50 cursor-not-allowed"
-                  >
-                    Ya notificado
-                  </Button>
-                )}
-
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setVisibleEvidenceIndex(
-                      visibleEvidenceIndex === index ? null : index
-                    );
-                    setIncidenciaId(i.id);
-                  }}
-                >
-                  {visibleEvidenceIndex === index ? (
-                    <>
-                      <EyeOff className="mr-2 h-4 w-4" />
-                      Ocultar detalles
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver detalles
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {visibleEvidenceIndex === index && (
-                <div className="mt-6 border-t pt-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-gray-600 font-medium">
-                      Detalles de la incidencia
+          incidencias
+            .filter((i) => (filter === "TODOS" ? true : i.estado === filter))
+            .map((i, index) => (
+              <li
+                key={index}
+                className="border rounded-lg shadow-sm p-5 bg-white hover:shadow-md transition-all"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      Vehículo:{" "}
+                      <span className="font-semibold">{i.vehiculo?.placa}</span>
                     </p>
-                    <Button variant="secondary" onClick={() => setMap(!map)}>
-                      {map ? "Ocultar Preview" : "Ver Preview"}
-                    </Button>
+                    <p className="text-lg font-semibold text-gray-800 mt-1">
+                      {i.descripcion}
+                    </p>
                   </div>
 
-                  {map && (
-                    <div className="border rounded-lg bg-gray-50">
-                      <MapPreview
-                        lat={i.latitud}
-                        lng={i.longitud}
-                        descripcion={i.descripcion}
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <AfectadosPage incidenciaId={incidenciaId} />
-                  </div>
-
-                  <div>
-                    <EvidenciasPage incidenciaId={incidenciaId} />
+                  <div className="flex flex-col items-end gap-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        prioridadStyles[i.prioridad]
+                      }`}
+                    >
+                      Prioridad: {i.prioridad}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        estadoStyles[i.estado]
+                      }`}
+                    >
+                      {i.estado}
+                    </span>
                   </div>
                 </div>
-              )}
-            </li>
-          ))
+
+                <div className="mt-4 flex justify-end">
+                  {i.estado.toUpperCase() === "PENDIENTE" ? (
+                    <Button
+                      type="button"
+                      onClick={() => openModal(i.id)}
+                      className="w-full sm:w-auto text-xs px-4 py-2 mx-2"
+                    >
+                      Reportar a la aseguradora
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      disabled
+                      className="w-full sm:w-auto text-xs px-4 py-2 mx-2 opacity-50 cursor-not-allowed"
+                    >
+                      Ya notificado
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setVisibleEvidenceIndex(
+                        visibleEvidenceIndex === index ? null : index
+                      );
+                      setIncidenciaId(i.id);
+                    }}
+                  >
+                    {visibleEvidenceIndex === index ? (
+                      <>
+                        <EyeOff className="mr-2 h-4 w-4" />
+                        Ocultar detalles
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver detalles
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {visibleEvidenceIndex === index && (
+                  <div className="mt-6 border-t pt-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-600 font-medium">
+                        Detalles de la incidencia
+                      </p>
+                      <Button variant="secondary" onClick={() => setMap(!map)}>
+                        {map ? "Ocultar Preview" : "Ver Preview"}
+                      </Button>
+                    </div>
+
+                    {map && (
+                      <div className="border rounded-lg bg-gray-50">
+                        <MapPreview
+                          lat={i.latitud}
+                          lng={i.longitud}
+                          descripcion={i.descripcion}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <AfectadosPage incidenciaId={incidenciaId} />
+                    </div>
+
+                    <div>
+                      <EvidenciasPage incidenciaId={incidenciaId} />
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))
         )}
       </ul>
       {selectedIncidenciaId !== null && (

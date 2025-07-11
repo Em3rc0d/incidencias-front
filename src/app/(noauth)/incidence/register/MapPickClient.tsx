@@ -20,17 +20,18 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
+type Ubicacion = {
+  latitud: number | null;
+  longitud: number | null;
+};
+
+
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 });
-
-type Ubicacion = {
-  latitud: number;
-  longitud: number;
-};
 
 // Componente que escucha clics en el mapa
 function LocationPicker({
@@ -53,26 +54,36 @@ function LocationPicker({
 function FlyToUbicacion({ ubicacion }: { ubicacion: Ubicacion | null }) {
   const map = useMap();
   useEffect(() => {
-    if (ubicacion) {
+    if (
+      ubicacion &&
+      ubicacion.latitud !== null &&
+      ubicacion.longitud !== null
+    ) {
       map.setView([ubicacion.latitud, ubicacion.longitud], 16);
     }
   }, [ubicacion, map]);
   return null;
 }
 
-export default function MapPickClient() {
+export default function MapPickClient({
+  ubicacion,
+  onUbicacionChange,
+}: {
+  ubicacion: Ubicacion | null;
+  onUbicacionChange: (ubic: Ubicacion) => void;
+}) {
   const [usarUbicacionActual, setUsarUbicacionActual] = useState(false);
-  const [ubicacion, setUbicacion] = useState<Ubicacion | null>(null);
   const [direccion, setDireccion] = useState("");
 
   useEffect(() => {
     if (usarUbicacionActual) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUbicacion({
+          const ubic = {
             latitud: position.coords.latitude,
             longitud: position.coords.longitude,
-          });
+          };
+          onUbicacionChange(ubic);
         },
         (error) => {
           console.error("Error obteniendo ubicación:", error);
@@ -100,7 +111,7 @@ export default function MapPickClient() {
       if (data.length > 0) {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
-        setUbicacion({ latitud: lat, longitud: lon });
+        onUbicacionChange({ latitud: lat, longitud: lon });
       } else {
         alert("Dirección no encontrada.");
       }
@@ -112,7 +123,7 @@ export default function MapPickClient() {
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
-        {ubicacion
+        {ubicacion && ubicacion.latitud !== null && ubicacion.longitud !== null
           ? `Ubicación: Lat ${ubicacion.latitud.toFixed(
               6
             )} | Lon ${ubicacion.longitud.toFixed(6)}`
@@ -150,7 +161,7 @@ export default function MapPickClient() {
 
           <MapContainer
             center={
-              ubicacion
+              ubicacion && ubicacion.latitud !== null && ubicacion.longitud !== null
                 ? [ubicacion.latitud, ubicacion.longitud]
                 : [-12.0464, -77.0428]
             }
@@ -167,10 +178,12 @@ export default function MapPickClient() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <LocationPicker setUbicacion={setUbicacion} />
+            <LocationPicker setUbicacion={onUbicacionChange} />
             <FlyToUbicacion ubicacion={ubicacion} />
-            {ubicacion && (
-              <Marker position={[ubicacion.latitud, ubicacion.longitud]} />
+            {ubicacion &&
+              ubicacion.latitud !== null &&
+              ubicacion.longitud !== null && (
+                <Marker position={[ubicacion.latitud, ubicacion.longitud]} />
             )}
           </MapContainer>
         </>
